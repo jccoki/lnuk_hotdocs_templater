@@ -57,6 +57,7 @@ Sub ProcessVariable(objDoc, r_start, r_end)
     Mid(uuid_value, 13, 4) & "-" & Mid(uuid_value, 17, 4) & "-" & _
     Right(uuid_value, 12)
 
+  ' target document should first be "developer" ready
   Set objContentControl = objDoc.ContentControls.Add(wdContentControlRichText, objDoc.Range(r_start, r_end))
   objContentControl.Tag = "HD:1.185.0.0:" & uuid_value
   
@@ -68,22 +69,12 @@ Sub ProcessVariable(objDoc, r_start, r_end)
   objRange.Text = content_control_value
 End Sub
 
-Sub process_template()
+Sub ProcessTemplate(template_input_path, psl_input_path)
     Dim objFSO, objRegEx, objDoc, objWord, objSelection, objCustomProperty, objComment
-    Dim input_file, input_file_path, curr_dir
-    Dim autoCorrect, autoSave, autoClose, variable_regex_pattern
+    Dim input_file_path, curr_dir, output_file_path, psl_output_file_path
+    Dim variable_regex_pattern
     Dim custom_property_exists As Boolean
 
-    ' CHANGE AS NEEDED
-    ' the name of the file to be checked
-    input_file = "Confidentiality_agreement_mutual.docx"
-    ' should we apply formatting corrections automatically?
-    autoCorrect = False
-    ' should we save the changes to output document automatically?
-    autoSave = True
-    ' should we close the output document automatically ignoring the changes?
-    autoClose = False
-    '-------------------------------------------------------------------------------------------------------------
     Set objFSO = CreateObject("Scripting.FileSystemObject")
     Set objRegEx = CreateObject("VBScript.RegExp")
     ' we need to continue through errors since if Word isn't
@@ -96,6 +87,10 @@ Sub process_template()
     ' it's good practice to reset error warnings
     On Error GoTo 0
 
+    ' open your document and ensure its visible and activate after openning
+    objWord.Visible = True
+    objWord.Activate
+
     ' search throught the string
     objRegEx.Global = True
     
@@ -104,14 +99,14 @@ Sub process_template()
     
     ' build input file path from current directory
     curr_dir = ActiveWorkbook.Path
-    input_file_path = objFSO.BuildPath(curr_dir, "input")
-    input_file_path = objFSO.BuildPath(input_file_path, input_file)
 
-    ' open your document and ensure its visible and activate after openning
-    objWord.Visible = True
-    objWord.Activate
+    output_file_path = objFSO.BuildPath(curr_dir, "output")
+    output_file_path = objFSO.BuildPath(output_file_path, objFSO.GetFileName(template_input_path))
 
-    Set objDoc = objWord.Documents.Open(input_file_path)
+    psl_output_file_path = objFSO.BuildPath(curr_dir, "output")
+    psl_output_file_path = objFSO.BuildPath(psl_output_file_path, objFSO.GetFileName(psl_input_path))
+
+    Set objDoc = objWord.Documents.Open(template_input_path)
     Set objSelection = objWord.Selection
 
     ' clean the template from comments
@@ -150,13 +145,34 @@ Sub process_template()
     Loop While objSelection.Find.Found
     objSelection.HomeKey (wdStory)
 
-    ' save changes to MS Word output
-    If autoSave Then
-      objDoc.Save
+    ' save changes and close MS Word output
+    objDoc.SaveAs (output_file_path)
+    objDoc.Close
+    Set objDoc = Nothing
+
+    ' convert PSL flat document into Hotdocs compatible template
+    Set objDoc = objWord.Documents.Open(psl_input_path)
+
+    ' clean the template from comments
+    For Each objComment In objDoc.Comments
+      objComment.DeleteRecursively
+    Next objComment
+
+    ' add hotdocs custom properties
+    custom_property_exists = False
+    For Each objCustomProperty In objDoc.CustomDocumentProperties
+      If objCustomProperty.Name = "HotDocs version" Then
+        custom_property_exists = True
+        Exit For
+      End If
+    Next objCustomProperty
+
+    If Not custom_property_exists Then
+        objDoc.CustomDocumentProperties.Add Name:="HotDocs version", LinkToContent:=False, Type:=msoPropertyTypeNumber, Value:=12
     End If
 
-    ' close MS Word output
-    If autoClose Then
-      objDoc.Close
-    End If
+    ' save changes and close MS Word output
+    objDoc.SaveAs (psl_output_file_path)
+    objDoc.Close
+    Set objDoc = Nothing
 End Sub
