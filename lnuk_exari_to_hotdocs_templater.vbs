@@ -69,7 +69,7 @@ Sub ProcessVariable(objDoc, r_start, r_end)
   objRange.Text = content_control_value
 End Sub
 
-Sub ProcessTemplate(template_input_path, psl_input_path)
+Sub ProcessTemplate(template_input_path)
     Dim objFSO, objRegEx, objDoc, objWord, objSelection, objCustomProperty, objComment
     Dim input_file_path, curr_dir, output_file_path, psl_output_file_path
     Dim variable_regex_pattern
@@ -103,9 +103,6 @@ Sub ProcessTemplate(template_input_path, psl_input_path)
     output_file_path = objFSO.BuildPath(curr_dir, "output")
     output_file_path = objFSO.BuildPath(output_file_path, objFSO.GetFileName(template_input_path))
 
-    psl_output_file_path = objFSO.BuildPath(curr_dir, "output")
-    psl_output_file_path = objFSO.BuildPath(psl_output_file_path, objFSO.GetFileName(psl_input_path))
-
     Set objDoc = objWord.Documents.Open(template_input_path)
     Set objSelection = objWord.Selection
 
@@ -113,19 +110,6 @@ Sub ProcessTemplate(template_input_path, psl_input_path)
     For Each objComment In objDoc.Comments
       objComment.DeleteRecursively
     Next objComment
-
-    ' add hotdocs custom properties
-    custom_property_exists = False
-    For Each objCustomProperty In objDoc.CustomDocumentProperties
-      If objCustomProperty.Name = "HotDocs version" Then
-        custom_property_exists = True
-        Exit For
-      End If
-    Next objCustomProperty
-    
-    If Not custom_property_exists Then
-        objDoc.CustomDocumentProperties.Add Name:="HotDocs version", LinkToContent:=False, Type:=msoPropertyTypeNumber, Value:=12
-    End If
     
     ' search and process simple variable markup
     Do
@@ -147,32 +131,6 @@ Sub ProcessTemplate(template_input_path, psl_input_path)
 
     ' save changes and close MS Word output
     objDoc.SaveAs (output_file_path)
-    objDoc.Close
-    Set objDoc = Nothing
-
-    ' convert PSL flat document into Hotdocs compatible template
-    Set objDoc = objWord.Documents.Open(psl_input_path)
-
-    ' clean the template from comments
-    For Each objComment In objDoc.Comments
-      objComment.DeleteRecursively
-    Next objComment
-
-    ' add hotdocs custom properties
-    custom_property_exists = False
-    For Each objCustomProperty In objDoc.CustomDocumentProperties
-      If objCustomProperty.Name = "HotDocs version" Then
-        custom_property_exists = True
-        Exit For
-      End If
-    Next objCustomProperty
-
-    If Not custom_property_exists Then
-        objDoc.CustomDocumentProperties.Add Name:="HotDocs version", LinkToContent:=False, Type:=msoPropertyTypeNumber, Value:=12
-    End If
-
-    ' save changes and close MS Word output
-    objDoc.SaveAs (psl_output_file_path)
     objDoc.Close
     Set objDoc = Nothing
 End Sub
