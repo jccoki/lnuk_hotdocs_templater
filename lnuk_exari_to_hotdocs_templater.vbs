@@ -170,38 +170,41 @@ Sub ProcessTemplate(template_input_path)
                 bracket_cond_end_pos = InStrRev(bracket_range, "*")
                 bracket_cond_length = bracket_cond_end_pos - bracket_cond_start_pos
 
-                ' we process everything from ALT/OPT/RPT regions
-                bracket_condition = Mid(bracket_range, bracket_cond_start_pos + 1, bracket_cond_length - 1)
-                bracket_condition = Replace(bracket_condition, "-", "_")
-                bracket_condition = Replace(bracket_condition, ".", "_")
-                bracket_range_content = "{IF " & bracket_condition & "}"
+                ' exclude text that are simply wrapped with square brackets but does not contain Exari condition
+                If Not bracket_cond_length = 0 Then
+                    ' we process everything from ALT/OPT/RPT regions
+                    bracket_condition = Mid(bracket_range, bracket_cond_start_pos + 1, bracket_cond_length - 1)
+                    bracket_condition = Replace(bracket_condition, "-", "_")
+                    bracket_condition = Replace(bracket_condition, ".", "_")
+                    bracket_range_content = "{IF " & bracket_condition & "}"
 
-                ' generate UUID and format into ISO/IEC 9834-8:2008 standard
-                uuid_value = GetGUID()
-                uuid_value = LCase(uuid_value)
-                uuid_value = Left(uuid_value, 8) & "-" & Mid(uuid_value, 9, 4) & "-" & _
-                    Mid(uuid_value, 13, 4) & "-" & Mid(uuid_value, 17, 4) & "-" & _
-                    Right(uuid_value, 12)
+                    ' generate UUID and format into ISO/IEC 9834-8:2008 standard
+                    uuid_value = GetGUID()
+                    uuid_value = LCase(uuid_value)
+                    uuid_value = Left(uuid_value, 8) & "-" & Mid(uuid_value, 9, 4) & "-" & _
+                        Mid(uuid_value, 13, 4) & "-" & Mid(uuid_value, 17, 4) & "-" & _
+                        Right(uuid_value, 12)
 
-                Set objContentControl = objDoc.ContentControls.Add(wdContentControlRichText, objDoc.Range(bracket_start_pos, (bracket_start_pos + bracket_cond_end_pos) + 1))
-                objContentControl.Tag = "HD:1.185.0.0:" & uuid_value
+                    Set objContentControl = objDoc.ContentControls.Add(wdContentControlRichText, objDoc.Range(bracket_start_pos, (bracket_start_pos + bracket_cond_end_pos) + 1))
+                    objContentControl.Tag = "HD:1.185.0.0:" & uuid_value
 
-                objContentControl.SetPlaceholderText Nothing, Nothing, Text:="IF " & bracket_condition
+                    objContentControl.SetPlaceholderText Nothing, Nothing, Text:="IF " & bracket_condition
 
-                objDoc.Range(bracket_start_pos, (bracket_start_pos + bracket_cond_end_pos) + 1).Text = bracket_range_content
+                    objDoc.Range(bracket_start_pos, (bracket_start_pos + bracket_cond_end_pos) + 1).Text = bracket_range_content
 
-                ' generate UUID and format into ISO/IEC 9834-8:2008 standard
-                uuid_value = GetGUID()
-                uuid_value = LCase(uuid_value)
-                uuid_value = Left(uuid_value, 8) & "-" & Mid(uuid_value, 9, 4) & "-" & _
-                    Mid(uuid_value, 13, 4) & "-" & Mid(uuid_value, 17, 4) & "-" & _
-                    Right(uuid_value, 12)
+                    ' generate UUID and format into ISO/IEC 9834-8:2008 standard
+                    uuid_value = GetGUID()
+                    uuid_value = LCase(uuid_value)
+                    uuid_value = Left(uuid_value, 8) & "-" & Mid(uuid_value, 9, 4) & "-" & _
+                        Mid(uuid_value, 13, 4) & "-" & Mid(uuid_value, 17, 4) & "-" & _
+                        Right(uuid_value, 12)
 
-                Set objRange = objDoc.Range(bracket_end_pos - 1, bracket_end_pos)
-                Set objContentControl = objDoc.ContentControls.Add(wdContentControlRichText, objRange)
-                objContentControl.Tag = "HD:1.185.0.0:" & uuid_value
-                objContentControl.SetPlaceholderText Nothing, Nothing, Text:="END IF"
-                objRange.Text = "{END IF}"
+                    Set objRange = objDoc.Range(bracket_end_pos - 1, bracket_end_pos)
+                    Set objContentControl = objDoc.ContentControls.Add(wdContentControlRichText, objRange)
+                    objContentControl.Tag = "HD:1.185.0.0:" & uuid_value
+                    objContentControl.SetPlaceholderText Nothing, Nothing, Text:="END IF"
+                    objRange.Text = "{END IF}"
+                End If
             End If
         End If
       End If
