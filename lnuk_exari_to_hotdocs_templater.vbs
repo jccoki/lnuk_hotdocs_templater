@@ -172,18 +172,6 @@ Sub ProcessTemplate(template_input_path)
 
                 ' exclude text that are simply wrapped with square brackets but does not contain Exari condition
                 If Not bracket_cond_length = 0 Then
-                    ' we process everything from ALT/OPT/RPT regions
-                    bracket_condition = Mid(bracket_range, bracket_cond_start_pos + 1, bracket_cond_length - 1)
-
-                    If InStr(bracket_condition, "-") Then
-                        bracket_condition_array = Split(bracket_condition, "-")
-                        bracket_condition = bracket_condition_array(0) & "_" & Replace(bracket_condition_array(1), " ", "")
-                    Else
-                        bracket_condition = Replace(bracket_condition, ".", "_")
-                    End If
-
-                    bracket_range_content = "{IF " & bracket_condition & "}"
-
                     ' process the end square bracket first
                     ' generate UUID and format into ISO/IEC 9834-8:2008 standard
                     uuid_value = GetGUID()
@@ -197,6 +185,18 @@ Sub ProcessTemplate(template_input_path)
                     objContentControl.Tag = "HD:1.185.0.0:" & uuid_value
                     objContentControl.SetPlaceholderText Nothing, Nothing, Text:="END IF"
                     objRange.Text = "{END IF}"
+
+                    ' we process everything from ALT/OPT/RPT regions
+                    bracket_condition = Mid(bracket_range, bracket_cond_start_pos + 1, bracket_cond_length - 1)
+
+                    If InStr(bracket_condition, "-") Then
+                        bracket_condition_array = Split(bracket_condition, "-")
+                        bracket_condition = bracket_condition_array(0) & "_" & Replace(bracket_condition_array(1), " ", "")
+                    Else
+                        bracket_condition = Replace(bracket_condition, ".", "_")
+                    End If
+
+                    bracket_range_content = "{IF " & bracket_condition & "}"
 
                     ' generate UUID and format into ISO/IEC 9834-8:2008 standard
                     uuid_value = GetGUID()
