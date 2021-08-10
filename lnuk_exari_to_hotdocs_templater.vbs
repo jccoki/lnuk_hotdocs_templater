@@ -10,6 +10,7 @@ Const wdStory = 6
 Const wdReplaceAll = 2
 Const wdGreen = 11
 Const wdBlue = 2
+Const wdBlack = 1
 
 Private Type GUID
   Data1 As Long
@@ -47,7 +48,6 @@ Sub ProcessVariable(objDoc, r_start, r_end)
   Dim uuid_value, content_control_value
   
   Set objRange = objDoc.Range(r_start, r_end)
-  objRange.Font.ColorIndex = wdBlue
   
   content_control_value = Replace(objRange.Text, "[", "")
   content_control_value = Replace(content_control_value, "]", "")
@@ -70,6 +70,7 @@ Sub ProcessVariable(objDoc, r_start, r_end)
   ' replace text inside square brackets with normalized value
   ' variable naming convention should be the same as generated from the logic file parser
   objRange.Text = content_control_value
+  objRange.Font.ColorIndex = wdBlack
 End Sub
 
 Sub ProcessTemplate(template_input_path)
