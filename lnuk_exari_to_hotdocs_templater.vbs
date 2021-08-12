@@ -45,13 +45,17 @@ End Function
 Sub ProcessVariable(objDoc, r_start, r_end)
   Dim objRange
   Dim objContentControl
-  Dim uuid_value, content_control_value
+  Dim uuid_value, content_control_range_text, content_control_placeholder_text
   
   Set objRange = objDoc.Range(r_start, r_end)
-  
-  content_control_value = Replace(objRange.Text, "[", "")
-  content_control_value = Replace(content_control_value, "]", "")
-  content_control_value = Replace(content_control_value, ".", "_")
+
+  content_control_range_text = objRange.Text
+  content_control_range_text = Replace(content_control_range_text, "[", "<")
+  content_control_range_text = Replace(content_control_range_text, "]", ">")
+  content_control_range_text = Replace(content_control_range_text, ".", "_")
+
+  content_control_placeholder_text = Replace(content_control_range_text, "<", "")
+  content_control_placeholder_text = Replace(content_control_placeholder_text, ">", "")
   
   ' generate UUID and format into ISO/IEC 9834-8:2008 standard
   uuid_value = GetGUID()
@@ -66,11 +70,10 @@ Sub ProcessVariable(objDoc, r_start, r_end)
   
   ' @note specify all params as discussed in https://answers.microsoft.com/en-us/msoffice/forum/msoffice_word-msoffice_custom-mso_2010/setplaceholdertext-method-fails-if-using-late/2637c5fb-cafc-4913-8780-752069c8522b
   ' else this code will fail with type mismatch error
-  objContentControl.SetPlaceholderText Nothing, Nothing, Text:=content_control_value
+  objContentControl.SetPlaceholderText Nothing, Nothing, Text:=content_control_placeholder_text
   ' replace text inside square brackets with normalized value
   ' variable naming convention should be the same as generated from the logic file parser
-  objRange.Text = content_control_value
-  objRange.Font.ColorIndex = wdBlack
+  objRange.Text = content_control_range_text
 End Sub
 
 Sub ProcessTemplate(template_input_path)
@@ -236,6 +239,20 @@ Sub ProcessTemplate(template_input_path)
                 objDoc.Range(objContentControl.Range.Start + 1, objContentControl.Range.End - 1).Font.ColorIndex = wdGreen
 
                 total_conditions_processed = total_conditions_processed + 1
+            End If
+
+            Set objRange = objDoc.Range(objContentControl.Range.Start, objContentControl.Range.End)
+            ' removes common formatting that could be derived from adjacent range
+            objRange.Bold = False
+            objRange.Italic = False
+
+            If InStr(LCase(objContentControl.Range), "<") Or InStr(LCase(objContentControl.Range), ">") Then
+                content_control_value = objContentControl.Range.Text
+                content_control_value = Replace(content_control_value, "<", "[")
+                content_control_value = Replace(content_control_value, ">", "]")
+
+                objRange.Text = content_control_value
+                objRange.Font.ColorIndex = wdBlack
             End If
         End If
     Next
